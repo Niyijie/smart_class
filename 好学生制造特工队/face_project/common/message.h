@@ -1,0 +1,16 @@
+#ifndef MESSAGE_H
+#define MESSAGE_H
+
+const int32_t CLIENT_LOGIN_MESSAGE = 1001;
+const int32_t CLIENT_PORT_MESSAGE = 1002;
+const int32_t CLIENT_LOGOFF_MESSAGE = 1003;
+
+const int32_t PI_LOGIN_MESSAGE = 1101;
+const int32_t PI_SEND_MESSAGE = 1102;
+const int32_t PI_BOXS_MESSAGE = 1103;
+const int32_t PI_BOXS_LOCATION_MESSAGE = 1104;
+
+const int32_t SERV_PORT_MESSAGE = 1201;
+
+#endif
+
