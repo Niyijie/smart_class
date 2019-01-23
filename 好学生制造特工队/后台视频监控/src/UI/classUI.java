@@ -2,12 +2,12 @@ package UI;
 
 import Common.frameGetter;
 import Common.util;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.net.DatagramSocket;
@@ -49,6 +49,8 @@ public class classUI extends JFrame {
     private JButton flushBtn;            //刷新按钮
     private JButton exitBtn;             //退出按钮
 
+    private classUI self;
+
     private List<Integer> stuBoxsLocation = null;
 
 
@@ -65,6 +67,7 @@ public class classUI extends JFrame {
     classUI(frameGetter _getter,String _room,List<Integer> _stuBoxLocation)
     {
         flag = true;
+        self = this;
         this.getter = _getter;
         this.classRoom = _room;
         this.stuBoxsLocation = _stuBoxLocation;
@@ -99,7 +102,7 @@ public class classUI extends JFrame {
         //教室号标签
         roomNum = new JLabel();
         roomNum.setBounds(20,50,200,30);
-        roomNum.setText("教室:       " + classRoom);
+        roomNum.setText("教室: " + classRoom);
         roomNum.setFont(new Font("宋体", Font.PLAIN, 16));
         infoArea.add(roomNum);
 
@@ -158,6 +161,19 @@ public class classUI extends JFrame {
         //退出按钮
         exitBtn = new JButton("退出");
         exitBtn.setBounds(20,600,150,90);
+        exitBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                /*
+                *   TODO
+                *   为考虑提高性能 以后可以析构掉，或者控制frameGerrer不再更新图像
+                */
+
+                System.out.println("close");
+                self.setVisible(false);
+
+            }
+        });
         infoArea.add(exitBtn);
 
         this.getContentPane().add(videoArea);
@@ -169,7 +185,6 @@ public class classUI extends JFrame {
         /*
         *  TO DO 设置显示框的时间时间
         */
-
         try {
             BufferedImage buf = ImageIO.read(new ByteArrayInputStream(dataBytes));
             Graphics g = buf.getGraphics();

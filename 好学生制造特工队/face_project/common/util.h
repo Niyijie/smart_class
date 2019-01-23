@@ -101,9 +101,14 @@ void arrayCopy(byte *sourse, int sourse_begin, byte *dest, int dest_begin, int l
 }
 
 //write data into buffer
-void writeDataIntoBUf(byte *buf, int32_t buf_begin, byte *data)
+// void writeDataIntoBUf(byte *buf, int32_t buf_begin, byte *data)
+// {
+//     arrayCopy(data, 0, buf, buf_begin, strlen((char *)data));
+// }
+
+void writeDataIntoBUf(byte *buf, int32_t buf_begin, byte *data,int len)
 {
-    arrayCopy(data, 0, buf, buf_begin, strlen((char *)data));
+    arrayCopy(data, 0, buf, buf_begin, len);
 }
 
 void writeDataIntoBUf(byte *buf, int32_t buf_begin, int32_t data)
@@ -111,6 +116,13 @@ void writeDataIntoBUf(byte *buf, int32_t buf_begin, int32_t data)
     byte dataBytes[4];
     int4to_bytes(data, dataBytes);
     arrayCopy(dataBytes, 0, buf, buf_begin, 4);
+}
+
+void writeDataIntoBUf(byte *buf, int32_t buf_begin, int64_t data)
+{
+    byte dataBytes[8];
+    int8to_bytes(data, dataBytes);
+    arrayCopy(dataBytes, 0, buf, buf_begin, 8);
 }
 
 int64_t getCrrTime()

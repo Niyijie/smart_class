@@ -1,10 +1,17 @@
 package UI;
 
 import Common.*;
+import chartPaint.BarChart;
+import chartPaint.lineChart;
+import chartPaint.pieChart;
 
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.DatagramSocket;
 import java.net.Socket;
@@ -18,13 +25,13 @@ public class clientUI extends JFrame
     private JScrollPane videoArea;    //视频区
     private JPanel buttonArea;   //按钮区
     private JPanel contains;     //视频区容器
+    private clientUI self = this;
+
+    private chatUI chat = null;
 
     public Map<String,ImagePanel> ImapePanelMapPool = null;    //视频线程池
 
     public Socket clientSock = null;   //客户端tcp套接字
-
-
-
 
     public static void main(String[] args)
     {
@@ -42,6 +49,7 @@ public class clientUI extends JFrame
         OutputStream out = null;
         //tcp 建立连接
         try {
+            //172.20.10.14
             ui.clientSock = new Socket("172.20.10.14", 9190);
             //获取套接字流
             ips = ui.clientSock.getInputStream();
@@ -61,7 +69,6 @@ public class clientUI extends JFrame
         {
             e.printStackTrace();
         }
-
     }
 
     clientUI()
@@ -101,41 +108,95 @@ public class clientUI extends JFrame
         buttonArea = new JPanel();
         buttonArea.setLayout(null);
         buttonArea.setBounds((int)(0.85*screenWidth),0,(int)(0.15*screenWidth),screenHeight);
-        //buttonArea.setBackground(Color.red);
 
         //添加课堂分析按钮
-        JButton classAnalyseBtn = new JButton("课堂分析");
-        classAnalyseBtn.setBounds(10,10,170,90);
-        buttonArea.add(classAnalyseBtn);
-
-        //添加教师分析按钮
-        JButton teacherAnalyseBtn = new JButton("教师分析");
-        teacherAnalyseBtn.setBounds(10,115,170,90);
-        buttonArea.add(teacherAnalyseBtn);
+        JButton chartsBtn = new JButton("表图分析");
+        chartsBtn.setBounds(10,10,170,90);
+        chartsBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFrame frame=new JFrame("教学图表分析");
+                frame.setLayout(new GridLayout(2,2));
+                frame.add(new BarChart().getChartPanel());           //添加柱形图
+                frame.add(new pieChart().getChartPanel());           //添加饼状图
+                frame.add(new lineChart().getChartPanel());          //添加折线图
+                frame.setBounds(0,0, screenWidth, screenHeight);
+                frame.setVisible(true);
+            }
+        });
+        buttonArea.add(chartsBtn);
 
         //添加考勤分析按钮
         JButton workAnalyseBtn = new JButton("考勤分析");
-        workAnalyseBtn.setBounds(10,215,170,90);
+        workAnalyseBtn.setBounds(10,115,170,90);
         buttonArea.add(workAnalyseBtn);
 
-        //添加单通知按钮
-        JButton oneWayTalkBtn = new JButton("单通知");
-        oneWayTalkBtn.setBounds(10,315,170,90);
-        buttonArea.add(oneWayTalkBtn);
+        //添加不合格记录按钮
+        JButton unqualifiedBtn = new JButton("不合格记录");
+        unqualifiedBtn.setBounds(10,215,170,90);
+        unqualifiedBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                unqualifiedRecordUI ui = new unqualifiedRecordUI();
+            }
+        });
 
-        //添加群通知按钮
-        JButton groupWayTalkBtn = new JButton("群通知");
-        groupWayTalkBtn.setBounds(10,415,170,90);
-        buttonArea.add(groupWayTalkBtn);
+        buttonArea.add(unqualifiedBtn);
+
+        //添加查找按钮
+        JButton searchBtn = new JButton("查找");
+        searchBtn.setBounds(10,315,170,90);
+        searchBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String room = JOptionPane.showInputDialog("请输入你要查找的教室：\n");
+                if(ImapePanelMapPool.containsKey(room)) {
+                    ImagePanel panel = ImapePanelMapPool.get(room);
+                    if (panel.getClassUI() == null) {
+                        classUI ui = new classUI(panel.getter,panel.getClassRoom(),panel.getStuBoxsLocation());
+                        panel.setClassUI(ui);
+                    } else {
+                        panel.getClassUI().setVisible(true);
+                    }
+                }
+            }
+        });
+        buttonArea.add(searchBtn);
+
+        //添加消息通知按钮
+        JButton chatBtn = new JButton("消息通知");
+        chatBtn.setBounds(10,415,170,90);
+        chatBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (chat == null)
+                    chat = new chatUI(self);
+                else
+                    chat.setVisible(true);
+            }
+        });
+        buttonArea.add(chatBtn);
 
         //添加刷新按钮
         JButton flushBtn = new JButton("刷新");
         flushBtn.setBounds(10,515,170,90);
+        flushBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                repaint();
+            }
+        });
         buttonArea.add(flushBtn);
 
         //添加退出按钮
         JButton exitBtn = new JButton("退出");
         exitBtn.setBounds(10,615,170,90);
+        exitBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
         buttonArea.add(exitBtn);
 
         //添加到框架中

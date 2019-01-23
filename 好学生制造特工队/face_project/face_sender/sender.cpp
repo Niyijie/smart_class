@@ -19,11 +19,12 @@ struct matUnit
     int box_num;
 };
 
-std::vector<matUnit> test_more_img();
 std::vector<int> detectAFrame(cv::Mat &frame, MTCNN &mtcnn);
-void test_video();
+void sendUnquarifiedScene(int &serv_sock, vector<frameUnit> &unitSet, int64_t &timeFrame);
 
 byte buf[2048];
+
+int64_t preUnquarifiedTime = 0;
 
 int main(int argc, char *argv[])
 {
@@ -81,34 +82,19 @@ int main(int argc, char *argv[])
     /*********************************************************************/
     int64_t preTime = 0;
 
+    // VideoCapture capture("rtsp://admin:admin123456@192.168.1.64/Streaming/Channels/2");
     VideoCapture capture(-1);
-    //vector<matUnit> content = test_more_img();
+
     Mat frame;
     while (true)
     {
-        // if (!capture.read(frame))
-        // {
-        //     cout << "读取视频失败" << endl;
-        //     break;
-        // }
         capture >> frame;
-        /********************************************************/
-
-        /********************************************************/
-
-        // if (content.size() == 0)
-        // {
-        //     content = test_more_img();
-        // }
-
-        // matUnit strUnit = content.back();
-        // frame = strUnit.frame;
-        // content.pop_back();
 
         vector<frameUnit> unitSet = getFrameUnitSet(frame);
         //packet timeframe + pic_count + order + data_len + data
         byte packet[8 + 4 + 4 + 4 + MAX_SIZE];
         int32_t total = 0;
+        int64_t nowFrameTime = unitSet[0].getFrameTime();
         for (frameUnit unit : unitSet)
         {
             //get frame time
@@ -140,101 +126,85 @@ int main(int argc, char *argv[])
             //send to
             total += frameDataLen;
             sendto(sender_fd, packet, sizeof(packet), 0, (sockaddr *)&serv_udp_addr, sizeof(serv_udp_addr));
-
-            if (timeFrame - preTime >= 1000000) //if bigger than 1s get a frame
+        }
+        if (nowFrameTime - preTime >= 1000000) //if bigger than 1s get a frame
+        {
+            cout << "analysy.........................." << endl;
+            preTime = nowFrameTime;
+            vector<int> BoxLocation = detectAFrame(frame, mtcnn);
+            //write box location message
+            writeDataIntoBUf(buf, 0, PI_BOXS_LOCATION_MESSAGE);
+            writeDataIntoBUf(buf, 4, (int32_t)BoxLocation.size());
+            /*
+            *  note!!! if bigger than 2048 will error
+            */
+            for (size_t i = 0; i < BoxLocation.size(); i++)
             {
-                cout << "analysy.........................." << endl;
-                preTime = timeFrame;
-                vector<int> BoxLocation = detectAFrame(frame,mtcnn);
-                writeDataIntoBUf(buf, 0, PI_BOXS_LOCATION_MESSAGE);
-                writeDataIntoBUf(buf, 4, (int32_t)BoxLocation.size());
-                /*
-                *  note!!! if bigger than 2048 will error
-                */
-                for (size_t i = 0; i < BoxLocation.size(); i++)
-                {
-                    writeDataIntoBUf(buf, (i + 2) * 4, BoxLocation[i]);
-                }
-                write(serv_sock, buf, 8 + BoxLocation.size() * 4);
-                bzero(buf, sizeof(buf));
+                writeDataIntoBUf(buf, (i + 2) * 4, BoxLocation[i]);
+            }
+            write(serv_sock, buf, 4 + 4 + BoxLocation.size() * 4);
+            bzero(buf, sizeof(buf));
+            //write unquarified scene
+            if (nowFrameTime - preUnquarifiedTime > 5000000 && BoxLocation.size() == 0) //20min
+            {
+                //1200000000
+                preUnquarifiedTime = nowFrameTime;
+                sendUnquarifiedScene(serv_sock, unitSet, nowFrameTime);
             }
         }
-        // //send box num
-        // writeDataIntoBUf(buf,0,PI_BOXS_MESSAGE);
-        // //writeDataIntoBUf(buf,4,strUnit.box_num);
-        // writeDataIntoBUf(buf,4,0);
-        // write(serv_sock, buf, 8);
-        // bzero(buf,sizeof(buf));
-
-        cout << "total data: " << total << endl;
-        //sleep(1);
     }
     close(sender_fd);
     return 0;
 }
 
-std::vector<matUnit> test_more_img()
+void sendUnquarifiedScene(int &serv_sock, vector<frameUnit> &unitSet, int64_t &timeFrame)
 {
-    char *model_path = "./new_models/"; //模型路径
-    MTCNN mtcnn(model_path);
-
-    std::vector<matUnit> content;
-    cv::Mat image;
-    std::string name;
-    std::vector<std::string> vname;
-    ifstream in("test_list.txt"); //测试图片路径，完整路径写进txt.
-    while (in >> name)
+    // //write message
+    // byte msgTypeBytes[4];
+    // int4to_bytes(PI_UNQUALIFIED_SCENE_MESSAGE, msgTypeBytes);
+    // write(serv_sock, msgTypeBytes, 4);
+    // //write time
+    // byte timeBytes[8];
+    // int8to_bytes(timeFrame, timeBytes);
+    // write(serv_sock, timeBytes, 8);
+    //write datalen
+    int32_t framedataLen = 0;
+    for (frameUnit unit : unitSet)
     {
-        vname.push_back(name);
-        cout << name << endl;
+        framedataLen += unit.getFrameDataLen();
     }
-
-    int id_n = 0;
-    cv::Mat crop;
-    //string path = "E:/mtcnn/48/neg/";
-
-    for (int i = 0; i < vname.size(); i++)
+    int32_t buflen = 4 + 8 + 4 + framedataLen;
+    byte *unquarifiedSendBuf = new byte[buflen];
+    //write message
+    writeDataIntoBUf(unquarifiedSendBuf,0,PI_UNQUALIFIED_SCENE_MESSAGE);
+    //write time
+    writeDataIntoBUf(unquarifiedSendBuf,4,timeFrame);
+    //write data len 
+    writeDataIntoBUf(unquarifiedSendBuf,4+8,framedataLen);
+    //write data
+    int32_t startIndex = 4+8+4;
+    for (int i=0;i<unitSet.size();i++)
     {
-        clock_t start_time = clock();
-        image = cv::imread(vname[i]);
-        int img_h = image.rows;
-        int img_w = image.cols;
-        //ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(image.data, ncnn::Mat::PIXEL_BGR2RGB, image.cols, image.rows);
-        ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(image.data, ncnn::Mat::PIXEL_BGR, image.cols, image.rows);
-        std::vector<Bbox> finalBbox;
-#if (MAXFACEOPEN == 1)
-        mtcnn.detectMaxFace(ncnn_img, finalBbox);
-#else
-        mtcnn.detect(ncnn_img, finalBbox);
-#endif
-        const int num_box = finalBbox.size();
-
-        //score
-        std::vector<cv::Rect> bbox;
-        bbox.resize(num_box);
-
-        cv::Mat new_image = image.clone();
-
-        for (int i = 0; i < num_box; i++)
-        {
-            bbox[i] = cv::Rect(finalBbox[i].x1, finalBbox[i].y1, finalBbox[i].x2 - finalBbox[i].x1 + 1, finalBbox[i].y2 - finalBbox[i].y1 + 1);
-        }
-
-        for (vector<cv::Rect>::iterator it = bbox.begin(); it != bbox.end(); it++)
-        {
-            rectangle(image, (*it), cv::Scalar(0, 0, 255), 2, 8, 0);
-        }
-        cout << "num box = "
-             << " " << num_box << endl;
-        //imshow("face_detection", image);
-        matUnit unit(image, num_box);
-        content.push_back(unit);
-
-        clock_t finish_time = clock();
-        double total_time = (double)(finish_time - start_time) / CLOCKS_PER_SEC;
-        std::cout << "time" << total_time * 1000 << "ms" << std::endl;
+        byte *dataPtr = &(*unitSet[i].getFrameData().begin());
+        writeDataIntoBUf(unquarifiedSendBuf,startIndex,dataPtr,unitSet[i].getFrameData().size());
+        startIndex = startIndex + unitSet[i].getFrameDataLen();
     }
-    return content;
+    int32_t len0 = write(serv_sock,unquarifiedSendBuf,buflen);
+    if(len0 != buflen)
+    {
+        printf("not same..................");
+    }
+    delete unquarifiedSendBuf;
+    cout << "frame byte size is ...... " << framedataLen << endl;
+    // byte datalenBytes[4];
+    // int4to_bytes(framedataLen, datalenBytes);
+    // write(serv_sock, datalenBytes, 4);
+    // //write data
+    // for (frameUnit unit : unitSet)
+    // {
+    //     byte *dataPtr = &(*unit.getFrameData().begin());
+    //     int sentlenx = write(serv_sock, dataPtr, unit.getFrameDataLen());
+    // }
 }
 
 vector<int> detectAFrame(cv::Mat &frame, MTCNN &mtcnn)
@@ -242,11 +212,11 @@ vector<int> detectAFrame(cv::Mat &frame, MTCNN &mtcnn)
     std::vector<int> locationInfo;
     clock_t start_time = clock();
     ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(frame.data, ncnn::Mat::PIXEL_BGR, frame.cols, frame.rows);
-   
+
     std::vector<Bbox> finalBbox;
-    mtcnn.detect(ncnn_img, finalBbox);
+    mtcnn.NcnnDetect(ncnn_img, finalBbox);
     const int num_box = finalBbox.size();
-    cout<<"num of boxs: " << num_box<<endl;
+    cout << "num of boxs: " << num_box << endl;
     //score
     std::vector<cv::Rect> bbox;
     bbox.resize(num_box);
@@ -262,67 +232,4 @@ vector<int> detectAFrame(cv::Mat &frame, MTCNN &mtcnn)
     double total_time = (double)(finish_time - start_time) / CLOCKS_PER_SEC;
     std::cout << "detect a frame time" << total_time * 1000 << "ms" << std::endl;
     return locationInfo;
-}
-
-void test_video()
-{
-    char *model_path = "./models/";
-    MTCNN mtcnn(model_path);
-    mtcnn.SetMinFace(40);
-    cv::VideoCapture mVideoCapture(-1);
-    //std::cout<<"here1111"<<std::endl;
-    //cv::VideoCapture mVideoCapture("v1.mp4");
-    if (!mVideoCapture.isOpened())
-    {
-        return;
-    }
-    cv::Mat frame;
-    mVideoCapture >> frame;
-    while (!frame.empty())
-    {
-        mVideoCapture >> frame;
-
-        if (frame.empty())
-        {
-            break;
-        }
-
-        clock_t start_time = clock();
-
-        ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(frame.data, ncnn::Mat::PIXEL_BGR2RGB, frame.cols, frame.rows);
-        std::vector<Bbox> finalBbox;
-#if (MAXFACEOPEN == 1)
-        mtcnn.detectMaxFace(ncnn_img, finalBbox);
-#else
-        mtcnn.detect(ncnn_img, finalBbox);
-#endif
-        const int num_box = finalBbox.size();
-
-        std::vector<cv::Rect> bbox;
-        bbox.resize(num_box);
-        for (int i = 0; i < num_box; i++)
-        {
-            bbox[i] = cv::Rect(finalBbox[i].x1, finalBbox[i].y1, finalBbox[i].x2 - finalBbox[i].x1 + 1, finalBbox[i].y2 - finalBbox[i].y1 + 1);
-
-            for (int j = 0; j < 5; j = j + 1)
-            {
-                cv::circle(frame, cvPoint(finalBbox[i].ppoint[j], finalBbox[i].ppoint[j + 5]), 2, CV_RGB(0, 255, 0), CV_FILLED);
-            }
-        }
-        for (vector<cv::Rect>::iterator it = bbox.begin(); it != bbox.end(); it++)
-        {
-            rectangle(frame, (*it), Scalar(0, 0, 255), 2, 8, 0);
-        }
-        imshow("face_detection", frame);
-        clock_t finish_time = clock();
-        double total_time = (double)(finish_time - start_time) / CLOCKS_PER_SEC;
-        std::cout << "time" << total_time * 1000 << "ms" << std::endl;
-
-        int q = cv::waitKey(10);
-        if (q == 27)
-        {
-            break;
-        }
-    }
-    return;
 }

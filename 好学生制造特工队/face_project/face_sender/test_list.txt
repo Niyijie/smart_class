@@ -1,10 +1,12 @@
 /home/kikian/Desktop/face_project/face_sender/pic/a_1.jpg
 /home/kikian/Desktop/face_project/face_sender/pic/a_2.jpg
+/home/kikian/Desktop/face_project/face_sender/pic/a_3.jpg
 /home/kikian/Desktop/face_project/face_sender/pic/a_4.jpg
 /home/kikian/Desktop/face_project/face_sender/pic/a_5.jpg
 /home/kikian/Desktop/face_project/face_sender/pic/a_6.jpg
 /home/kikian/Desktop/face_project/face_sender/pic/a_7.jpg
 /home/kikian/Desktop/face_project/face_sender/pic/a_8.jpg
-/home/kikian/Desktop/face_project/face_sender/pic/a_10.jpg
 /home/kikian/Desktop/face_project/face_sender/pic/a_9.jpg
-
+/home/kikian/Desktop/face_project/face_sender/pic/a_10.jpg
+/home/kikian/Desktop/face_project/face_sender/pic/a_11.jpg
+/home/kikian/Desktop/face_project/face_sender/pic/a_12.jpg

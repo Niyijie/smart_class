@@ -12,8 +12,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 public class ImagePanel extends JPanel
 {
@@ -29,6 +31,8 @@ public class ImagePanel extends JPanel
     private JLabel Jquarity;         //课堂质量标签
     private JLabel JstuNum;          //学生数量标签
     private classUI singleUI;
+
+    public Queue<Integer> tempNum = new ArrayDeque<>();
 
     private List<Integer> stuBoxsLocation = null;
 
@@ -104,17 +108,11 @@ public class ImagePanel extends JPanel
 
         this.add(lblIcon);
         this.setVisible(true);
-        //开启播放视频
-        /*
-        * TODO
-        * 改成多线程
-        **/
     }
 
-    public classUI getClassUI()
-    {
-        return singleUI;
-    }
+    public classUI getClassUI() { return singleUI; }
+
+    public void setClassUI(classUI ui){ this.singleUI = ui;}
 
     public List<Integer> getStuBoxsLocation(){return stuBoxsLocation;}
 
@@ -122,6 +120,8 @@ public class ImagePanel extends JPanel
     {
         this.classRoom = _classRoom;
     }
+
+    public String getClassRoom() { return this.classRoom; }
 
     public void setStudentNum(int _studentNum)
     {

@@ -1,8 +1,6 @@
 package Common;
 
 import UI.ImagePanel;
-import backstage.backstageUI;
-import backstage.backstage_client;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +39,6 @@ public class frameGetter
             frameUnit frame = recieve();
             //get new frame id
             long frameTime = frame.getFrameTime();
-            //System.out.println(frameTime + " " + frame.getUnitCount() + " " + frame.getUnitOrder() + " " + frame.getDataLen());
             if(frameTime < preFrameTime)
             {
                 continue;
@@ -50,6 +47,11 @@ public class frameGetter
             {
                 if(frameTime > preFrameTime)
                 {
+                    if(unitMap.size() < frame.getUnitCount()) {
+                        imagePanel.tempNum.poll();
+                        System.out.println("lose the frame " + frameTime);
+                    }
+
                     preFrameTime = frameTime;
                     unitMap.clear();
                 }
@@ -63,6 +65,13 @@ public class frameGetter
                     if (imagePanel.getClassUI()!=null&&imagePanel.getClassUI().getFlag())
                     {
                         imagePanel.getClassUI().updateIcon(imageData);
+                    }
+
+                    if(imagePanel.tempNum.size() != 0) {
+                        int num = imagePanel.tempNum.poll();
+                        imagePanel.updateStuNumLabel(num);
+                        if (imagePanel.getClassUI() != null)
+                            imagePanel.getClassUI().updateArrivedStudentLabel(num);
                     }
                 }
             }
@@ -105,7 +114,6 @@ public class frameGetter
 
         byte[] unitData = new byte[bytes2Int(dataLen)];
         System.arraycopy(buf, 20, unitData, 0, unitData.length);
-
 
         unit.setFrameTime(util.bytes2Long(frameTime));
         unit.setUnitCount(util.bytes2Int(unitCount));

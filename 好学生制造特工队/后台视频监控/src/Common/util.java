@@ -2,6 +2,8 @@ package Common;
 
 
 import java.awt.*;
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class util {
     public static final int FRAME_UNIT_MAX = 60*1024;
@@ -55,6 +57,19 @@ public class util {
     {
         Toolkit kit = Toolkit.getDefaultToolkit();
         return  kit.getScreenSize();
+    }
+
+    public static void writeImageToDisk(byte[] img, String fileName){
+        try {
+            File file = new File(fileName);
+            FileOutputStream fops = new FileOutputStream(file);
+            fops.write(img);
+            fops.flush();
+            fops.close();
+            System.out.println("图片写入磁盘");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

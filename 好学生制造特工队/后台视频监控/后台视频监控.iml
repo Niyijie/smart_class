@@ -7,6 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="opencv-345" level="project" />
+    <orderEntry type="library" name="jfree_chart" level="project" />
   </component>
 </module>

@@ -1,5 +1,5 @@
 7767517
-20 21
+18 19
 Input            data             0 1 data 0=3 1=48 2=48
 Convolution      conv1            1 1 data conv1 0=32 1=3 2=1 3=1 4=0 5=1 6=864
 PReLU            prelu1           1 1 conv1 conv1_prelu1 0=32
@@ -12,11 +12,9 @@ PReLU            prelu3           1 1 conv3 conv3_prelu3 0=64
 Pooling          pool3            1 1 conv3_prelu3 pool3 0=0 1=2 2=2 3=0 4=0
 Convolution      conv4            1 1 pool3 conv4 0=128 1=2 2=1 3=1 4=0 5=1 6=32768
 PReLU            prelu4           1 1 conv4 conv4_prelu4 0=128
-Convolution      conv4_2          1 1 conv4_prelu4 conv4_2 0=256 1=3 2=1 3=1 4=0 5=1 6=294912
-PReLU            prelu4_2         1 1 conv4_2 conv4_2_prelu4_2 0=256
-InnerProduct     conv5            1 1 conv4_2_prelu4_2 conv5 0=512 1=1 2=131072
-PReLU            prelu5           1 1 conv5 conv5_prelu5 0=512
+InnerProduct     conv5            1 1 conv4_prelu4 conv5 0=256 1=1 2=294912
+PReLU            prelu5           1 1 conv5 conv5_prelu5 0=256
 Split            splitncnn_0      1 2 conv5_prelu5 conv5_prelu5_splitncnn_0 conv5_prelu5_splitncnn_1
-InnerProduct     conv6-1          1 1 conv5_prelu5_splitncnn_1 conv6-1 0=2 1=1 2=1024
-InnerProduct     conv6-2          1 1 conv5_prelu5_splitncnn_0 conv6-2 0=4 1=1 2=2048
+InnerProduct     conv6-1          1 1 conv5_prelu5_splitncnn_1 conv6-1 0=2 1=1 2=512
+InnerProduct     conv6-2          1 1 conv5_prelu5_splitncnn_0 conv6-2 0=4 1=1 2=1024
 Softmax          prob1            1 1 conv6-1 prob1 0=0

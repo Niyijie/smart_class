@@ -12,6 +12,7 @@
 using namespace std;
 
 #define CLIENT_IP "172.20.10.3"
+//172.20.10.3
 
 void *client_line(void *arg);
 void *tranSenderUdpData(void *arg);
@@ -126,9 +127,9 @@ int main(int argc, char *argv[])
                     //write message into buf
                     writeDataIntoBUf(buf, 0, PI_LOGIN_MESSAGE);
                     //write addr info len
-                    writeDataIntoBUf(buf, 4, strlen(addrInfo));
+                    writeDataIntoBUf(buf, 4, (int32_t)strlen(addrInfo));
                     //write addr info
-                    writeDataIntoBUf(buf, 8, (byte *)addrInfo);
+                    writeDataIntoBUf(buf, 8, (byte *)addrInfo,strlen(addrInfo));
                     int32_t bufLen = 4 + 4 + strlen(addrInfo);
                     write(client_sock, buf, bufLen);
 
@@ -167,9 +168,9 @@ int main(int argc, char *argv[])
                     //write message
                     writeDataIntoBUf(buf, 0, PI_BOXS_MESSAGE);
                     //write addr info len
-                    writeDataIntoBUf(buf, 4, strlen(addrInfo));
+                    writeDataIntoBUf(buf, 4, (int32_t)strlen(addrInfo));
                     //write addr info
-                    writeDataIntoBUf(buf, 8, (byte *)addrInfo);
+                    writeDataIntoBUf(buf, 8, (byte *)addrInfo,strlen(addrInfo));
                     //write box num into buf
                     read(readfd,buf + 8 + strlen(addrInfo),4);
                     //sent to client
@@ -188,9 +189,9 @@ int main(int argc, char *argv[])
                     //write message
                     writeDataIntoBUf(buf, 0, PI_BOXS_LOCATION_MESSAGE);
                     //write addr info len
-                    writeDataIntoBUf(buf, 4, strlen(addrInfo));
+                    writeDataIntoBUf(buf, 4, (int32_t)strlen(addrInfo));
                     //write addr info
-                    writeDataIntoBUf(buf, 8, (byte *)addrInfo);
+                    writeDataIntoBUf(buf, 8, (byte *)addrInfo,strlen(addrInfo));
                     //write box num
                     writeDataIntoBUf(buf, 8 + strlen(addrInfo), BoxsDataLen);
                     //read boxs info into buf
@@ -199,6 +200,46 @@ int main(int argc, char *argv[])
                     int32_t bufLen = 4 + 4 + strlen(addrInfo) + 4 + BoxsDataLen * 4;
                     write(client_sock, buf, bufLen);
                     bzero(buf, sizeof(buf));
+                    break;
+                }
+                case PI_UNQUALIFIED_SCENE_MESSAGE:
+                {
+                    //get timeframe
+                    byte timeFrameBytes[8];
+                    read(readfd, timeFrameBytes, 8);
+                    //get datalen 
+                    byte datalenBytes[4];
+                    read(readfd,datalenBytes,4);
+                    int32_t len = bytesto_int4(datalenBytes);
+                    //get peer sock addr info
+                    char addrInfo[100];
+                    getPeerSockAddrInfo(addrInfo, readfd);
+                    //send buf
+                    byte *unquaryfiedBuf = new byte[4+4+strlen(addrInfo)+8+4];
+                    //write message
+                    writeDataIntoBUf(unquaryfiedBuf, 0, PI_UNQUALIFIED_SCENE_MESSAGE);
+                    //write addr info len
+                    writeDataIntoBUf(unquaryfiedBuf, 4, (int32_t)strlen(addrInfo));
+                    //write addr info
+                    writeDataIntoBUf(unquaryfiedBuf, 4+4, (byte *)addrInfo,strlen(addrInfo));
+                    //write frame time into buf
+                    writeDataIntoBUf(unquaryfiedBuf,4+4+strlen(addrInfo),timeFrameBytes,8);
+                    //write data len into buf
+                    writeDataIntoBUf(unquaryfiedBuf,4+4+strlen(addrInfo)+8,datalenBytes,4);
+                    //write to client
+                    write(client_sock,unquaryfiedBuf,4+4+strlen(addrInfo)+8+4);
+                    //write data to client
+                    byte sendbuf[60*1024];
+                    while(len > 0)
+                    {
+                        //each sent max datalen is 60kb
+                        int sentLen = (len > 60*1024)?(60*1024):len;
+                        int getLen = read(readfd,sendbuf,sentLen);
+                        write(client_sock,sendbuf,getLen);
+                        bzero(sendbuf,sizeof(sendbuf));
+                        len = len - getLen;
+                    } 
+                    delete unquaryfiedBuf;
                     break;
                 }
                 case CLIENT_LOGOFF_MESSAGE:
@@ -274,68 +315,7 @@ void *tranSenderUdpData(void *arg)
         arrayCopy(packet, 0, timeBytes, 0, 8);
         int64_t frameTime = bytesto_int8(timeBytes);
         sendto(serv_sock, packet, packetLen, 0, (sockaddr *)&receiver_addr, sizeof(receiver_addr));
-
-        // if (frameTime - preTime >= 5000000 || flag == true) //if bigger than 3s get a frame
-        // {
-        //     if (frameTime < preTime)
-        //     {
-        //         continue;
-        //     }
-        //     else
-        //     {
-        //         if (frameTime > preTime)
-        //         {
-        //             //if new frame arrived
-        //             preTime = frameTime;
-        //             frameDataMap.clear();
-        //             dataTotalLen = 0;
-        //             //get count
-        //             byte countBytes[4];
-        //             arrayCopy(packet, 8, countBytes, 0, 4);
-        //             count = bytesto_int4(countBytes);
-        //             flag = true;
-        //         }
-        //         //get order
-        //         byte orderBytes[4];
-        //         arrayCopy(packet, 12, orderBytes, 0, 4);
-        //         int32_t order = bytesto_int4(orderBytes);
-        //         //get data len
-        //         byte dataLenBytes[4];
-        //         arrayCopy(packet, 16, dataLenBytes, 0, 4);
-        //         int32_t datalen = bytesto_int4(dataLenBytes);
-        //         dataTotalLen += datalen;
-        //         //get data
-        //         byte *dataBytes = new byte[datalen];
-        //         bzero(dataBytes, datalen);
-        //         arrayCopy(packet, 20, dataBytes, 0, datalen);
-        //         //add in the map
-        //         frameDataMap.insert(pair<int32_t, dataUnit>(order, dataUnit(datalen, dataBytes)));
-        //         dataUnit dataBytes1 = frameDataMap[order];
-        //         //if frame packets is all arrived and convert it to a picture
-        //         if (frameDataMap.size() == count)
-        //         {
-        //             byte *frameData = new byte[dataTotalLen];
-        //             getFrameData(frameDataMap, count, frameData);
-        //             string fp_name = to_string(frameTime) + ".jpg";
-        //             FILE *fp = fopen(fp_name.c_str(), "ab");
-        //             fwrite(frameData, 1, dataTotalLen, fp);
-        //             delete[] frameData;
-        //             flag = false;
-        //         }
-        //     }
-        // }
     }
     close(serv_sock);
     return 0;
 }
-
-// Mat frame;
-// vector<byte> d(frameData, frameData + dataTotalLen);
-// frame = imdecode(Mat(d), CV_LOAD_IMAGE_COLOR);
-// imshow("picture", frame);
-// delete[] frameData;
-// char t = waitKey(30);
-// if (t == 27)
-// {
-//     break;
-// }
