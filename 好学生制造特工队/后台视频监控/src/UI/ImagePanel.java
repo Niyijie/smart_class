@@ -32,6 +32,8 @@ public class ImagePanel extends JPanel
     private JLabel JstuNum;          //学生数量标签
     private classUI singleUI;
 
+    public boolean flag = false;
+
     public Queue<Integer> tempNum = new ArrayDeque<>();
 
     private List<Integer> stuBoxsLocation = null;
@@ -141,11 +143,12 @@ public class ImagePanel extends JPanel
     }
 
     //更新图标
-    public void updateIcon(byte[] dataBytes) {
+    public void updateIcon(BufferedImage imageData) {
         /*
         *   TO DO 提高性能将imagepanel和classUi的icon用同一个引用
         */
-        ImageIcon icon = new ImageIcon(dataBytes);
+        ImageIcon icon = new ImageIcon(imageData);
+        flag = true;
         //图标缩放知适合大小，并展示
         icon.setImage(icon.getImage().getScaledInstance(windowLen,windowLen,Image.SCALE_DEFAULT));
         lblIcon.setIcon(icon);

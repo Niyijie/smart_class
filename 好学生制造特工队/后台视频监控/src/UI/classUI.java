@@ -1,6 +1,7 @@
 package UI;
 
 import Common.frameGetter;
+import Common.message;
 import Common.util;
 
 import javax.imageio.ImageIO;
@@ -8,8 +9,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
 import java.net.DatagramSocket;
 import java.util.List;
 
@@ -19,8 +23,6 @@ public class classUI extends JFrame {
 
     private JLabel videoArea;    //视频区
     private JPanel infoArea;          //信息区
-
-
 
     private boolean flag;        //标记是否已经拥有该窗口对象
 
@@ -46,14 +48,16 @@ public class classUI extends JFrame {
     private String tchAct = "上课";
 
     private JButton classCallBtn;        //课堂点名按钮
-    private JButton flushBtn;            //刷新按钮
+    private JButton leftBtn;            //左按钮
+    private JButton rightBtn;            //右按钮
+    private JButton zoomInBtn;            //放大按钮
+    private JButton zoomOutBtn;            //缩小按钮
+
     private JButton exitBtn;             //退出按钮
 
     private classUI self;
 
     private List<Integer> stuBoxsLocation = null;
-
-
 
     //设置全屏
     Dimension screenSize = util.getScreenSize();
@@ -153,14 +157,181 @@ public class classUI extends JFrame {
         classCallBtn.setBounds(20,400,150,90);
         infoArea.add(classCallBtn);
 
-        //刷新按钮
-        flushBtn = new JButton("刷新");
-        flushBtn.setBounds(20,500,150,90);
-        infoArea.add(flushBtn);
+        //控制按钮
+        leftBtn = new JButton("向左");
+        leftBtn.setBounds(20,500,80,60);
+        leftBtn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent ev) {
+                super.mousePressed(ev);
+
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_PAN_LEFT_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                System.out.println("按下");
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent ev)
+            {
+                super.mouseReleased(ev);
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_LEFT_STOP_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                System.out.println("松开");
+            }
+
+        });
+        infoArea.add(leftBtn);
+
+        rightBtn = new JButton("向右");
+        rightBtn.setBounds(100,500,80,60);
+        rightBtn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent ev) {
+                super.mousePressed(ev);
+
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_PAN_RIGHT_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                System.out.println("按下");
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent ev)
+            {
+                super.mouseReleased(ev);
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_RIGHT_STOP_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                System.out.println("松开");
+            }
+
+        });
+        infoArea.add(rightBtn);
+
+        zoomInBtn = new JButton("放大");
+        zoomInBtn.setBounds(20,560,80,60);
+        zoomInBtn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent ev) {
+                super.mousePressed(ev);
+
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_ZOOM_IN_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                System.out.println("按下");
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent ev)
+            {
+                super.mouseReleased(ev);
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_ZOOM_IN_STOP_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                System.out.println("松开");
+            }
+
+        });
+        infoArea.add(zoomInBtn);
+
+        zoomOutBtn = new JButton("缩小");
+        zoomOutBtn.setBounds(100,560,80,60);
+        zoomOutBtn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent ev) {
+                super.mousePressed(ev);
+
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_ZOOM_OUT_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                System.out.println("按下");
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent ev)
+            {
+                super.mouseReleased(ev);
+                try {
+                    OutputStream out = getter.getClientSock().getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_CONTROL_MESSAGE));
+                    out.write(util.int2Bytes(classRoom.getBytes().length));
+                    out.write(classRoom.getBytes());
+                    out.write(util.int2Bytes(message.CLIENT_ZOOM_OUT_STOP_MESSAGE));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                System.out.println("松开");
+            }
+        });
+        infoArea.add(zoomOutBtn);
 
         //退出按钮
         exitBtn = new JButton("退出");
-        exitBtn.setBounds(20,600,150,90);
+        exitBtn.setBounds(20,630,150,90);
         exitBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -181,22 +352,21 @@ public class classUI extends JFrame {
     }
 
     //更新图标
-    public void updateIcon(byte[] dataBytes) {
+    public void updateIcon(BufferedImage image) {
         /*
         *  TO DO 设置显示框的时间时间
         */
         try {
-            BufferedImage buf = ImageIO.read(new ByteArrayInputStream(dataBytes));
-            Graphics g = buf.getGraphics();
+            Graphics g = image.getGraphics();
             g.setColor(Color.BLUE);
             //显示学生坐标
             if (stuBoxsLocation.size() != 0) {
                 for (int i = 0; i < stuBoxsLocation.size(); i += 4)
                     g.drawRect(stuBoxsLocation.get(i), stuBoxsLocation.get(i + 1), stuBoxsLocation.get(i + 2), stuBoxsLocation.get(i + 3));
             }
-            ImageIcon icon = new ImageIcon(buf);
+            ImageIcon icon = new ImageIcon(image);
             //图标缩放知适合大小，并展示
-            icon.setImage(icon.getImage().getScaledInstance((int) (0.85 * screenSize.width), screenSize.height, Image.SCALE_DEFAULT));
+            //icon.setImage(icon.getImage().getScaledInstance((int) (0.85 * screenSize.width), screenSize.height, Image.SCALE_DEFAULT));
             videoArea.setIcon(icon);
         }catch (Exception e)
         {

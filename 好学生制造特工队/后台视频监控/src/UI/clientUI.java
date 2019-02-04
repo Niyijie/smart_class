@@ -10,14 +10,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.DatagramSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class clientUI extends JFrame
@@ -33,12 +29,14 @@ public class clientUI extends JFrame
 
     public Socket clientSock = null;   //客户端tcp套接字
 
+    public static String SERV_IP = "192.168.0.34";
+
     public static void main(String[] args)
     {
         /*
         * TODO
         * 做成多线程的
-        * */
+        **/
 
         DatagramSocket sock = null;
         frameGetter getter = null;
@@ -47,18 +45,19 @@ public class clientUI extends JFrame
         //创建套接字流
         InputStream ips = null;
         OutputStream out = null;
+//        getter = new frameGetter("rtsp://admin:admin123456@192.168.0.64/Streaming/Channels/1",ui.clientSock);
+//        new UiThread(ui, "123", getter).start();
+
         //tcp 建立连接
         try {
-            //172.20.10.14
-            ui.clientSock = new Socket("172.20.10.14", 9190);
+            ui.clientSock = new Socket(clientUI.SERV_IP, 9190);
             //获取套接字流
             ips = ui.clientSock.getInputStream();
             out = ui.clientSock.getOutputStream();
 
             //向服务器发送客户端登陆消息
-            out.write(util.int2Bytes(message.PI_LOGIN_MESSAGE));
+            out.write(util.int2Bytes(message.CLIENT_LOGIN_MESSAGE));
             while (true) {
-                //获取摄像头端登陆消息
                 byte[] msgBytes = new byte[4];
                 ips.read(msgBytes);
                 int type = util.bytes2Int(msgBytes);
@@ -183,6 +182,15 @@ public class clientUI extends JFrame
         flushBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                try {
+                    OutputStream out = clientSock.getOutputStream();
+                    out.write(util.int2Bytes(message.CLIENT_RTSP_GET_MESSAGE));
+                }
+                catch (Exception ex)
+                {
+                    ex.printStackTrace();
+                }
+
                 repaint();
             }
         });

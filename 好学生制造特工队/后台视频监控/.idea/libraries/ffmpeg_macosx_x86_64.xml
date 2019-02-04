@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="ffmpeg-macosx-x86_64">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/src/lib/ffmpeg-macosx-x86_64.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

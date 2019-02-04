@@ -8,5 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jfree_chart" level="project" />
+    <orderEntry type="library" name="ffmpeg-macosx-x86_64" level="project" />
+    <orderEntry type="library" name="artoolkitplus-android-arm" level="project" />
   </component>
 </module>

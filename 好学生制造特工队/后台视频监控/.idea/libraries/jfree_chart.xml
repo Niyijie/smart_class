@@ -3,8 +3,11 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/src/lib/jcommon-1.0.23.jar!/" />
       <root url="jar://$PROJECT_DIR$/src/lib/jfreechart-1.0.19.jar!/" />
+      <root url="jar://$USER_HOME$/opencv-3.4.5/release/bin/opencv-345.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/opencv-3.4.5/release/bin/opencv-345.jar!/" />
+    </SOURCES>
   </library>
 </component>
